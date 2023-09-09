@@ -16,6 +16,15 @@ let isGameStarted;
 let isPlaying = true;
 let intervalId;
 
+// let piece = {
+//   pixels: [
+//     {
+//       x: 0,
+//       y: 0
+//     }
+//   ]
+// }
+
 let screen = [
   ["⬛", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
   ["⬛", "⬛", "⬛", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
@@ -105,7 +114,15 @@ function movePiece(screen) {
 }
 
 function movePieceRight() {
-  console.log("right");
+  for (let i = screen.length - 2; i >= 0; i--) {
+    for (let j = screen[i].length - 1; j >= 0; j--) {
+      // GO RIGHT
+      if (screen[i][j] === "⬛" && j !== screen[i].length - 1) {
+        screen[i][j] = "⬜";
+        screen[i][j + 1] = "⬛";
+      }
+    }
+  }
 }
 
 function movePieceLeft() {
