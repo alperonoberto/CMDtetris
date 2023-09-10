@@ -1,3 +1,4 @@
+
 const TITLE = `
       ______     __       _     
      /_  __/__  / /______(_)____
@@ -11,19 +12,10 @@ const TITLE = `
 ______________________________________
         ©alperonoberto, 2023
 `;
-const UPDATE_TIME = 1000;
+const UPDATE_TIME = 700;
 let isGameStarted;
 let isPlaying = true;
 let intervalId;
-
-// let piece = {
-//   pixels: [
-//     {
-//       x: 0,
-//       y: 0
-//     }
-//   ]
-// }
 
 let screen = [
   ["⬛", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
@@ -37,6 +29,13 @@ let screen = [
   ["⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
   ["⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
 ];
+
+const DIRECTIONS = {
+  RIGHT: 0,
+  LEFT: 1,
+  DOWN: 2,
+  ROTATE: 3,
+};
 
 const prompt = require("prompt-sync")({ sigint: true });
 const readline = require("readline");
@@ -55,19 +54,22 @@ process.stdin.on("keypress", (str, key) => {
   } else if (isPlaying) {
     switch (key.name.toLowerCase()) {
       case "a":
-        movePieceLeft();
+        movePiece(screen, DIRECTIONS.LEFT);
         break;
 
       case "d":
-        movePieceRight();
+        movePiece(screen, DIRECTIONS.RIGHT);
         break;
 
       case "s":
-        movePieceDown();
+        movePiece(screen, DIRECTIONS.DOWN);
         break;
 
       case "j":
-        rotatePiece();
+        movePiece(screen, DIRECTIONS.ROTATE);
+        break;
+      case "escape":
+        process.exit();
         break;
 
       default:
@@ -81,13 +83,16 @@ function tetris() {
 }
 
 function greet() {
+  console.clear();
   console.log(TITLE);
 }
 
 function updateBoard(screen) {
   intervalId = setInterval(() => {
     console.clear();
-    setTimeout(() => movePiece(screen), 500);
+    setTimeout(() => {
+      screen = movePiece(screen, DIRECTIONS.DOWN);
+    }, 500);
     isPlaying ? renderBoard(screen) : gameOver();
   }, UPDATE_TIME);
 }
@@ -101,40 +106,81 @@ function renderBoard(screen) {
   });
 }
 
-function movePiece(screen) {
+// function movePiece(screen) {
+//   for (let i = screen.length - 2; i >= 0; i--) {
+//     for (let j = screen[i].length - 1; j >= 0; j--) {
+//       // GO DOWN WITHOUT PRESSING DOWN KEY
+//       if (screen[i][j] === "⬛") {
+//         screen[i][j] = "⬜";
+//         screen[i + 1][j] = "⬛";
+//       }
+//     }
+//   }
+// }
+
+// function movePieceRight() {
+//   for (let i = screen.length - 2; i >= 0; i--) {
+//     for (let j = screen[i].length - 1; j >= 0; j--) {
+//       // GO RIGHT
+//       if (screen[i][j] < 1 || screen[i][j] > screen[i].length - 2) {
+//         console.log("movimiento invalido");
+//         break;
+//       } else if (screen[i][j] === "⬛") {
+//         screen[i][j] = "⬜";
+//         screen[i][j + 1] = "⬛";
+//       }
+//     }
+//   }
+// }
+
+// function movePieceLeft() {
+//   console.log("left");
+// }
+
+// function movePieceDown() {
+//   console.log("down");
+// }
+
+// function rotatePiece() {
+//   console.log("rotate");
+// }
+
+function movePiece(screen, direction) {
   for (let i = screen.length - 2; i >= 0; i--) {
     for (let j = screen[i].length - 1; j >= 0; j--) {
-      // GO DOWN WITHOUT PRESSING DOWN KEY
       if (screen[i][j] === "⬛") {
-        screen[i][j] = "⬜";
-        screen[i + 1][j] = "⬛";
+        switch (direction) {
+          //RIGHT
+          case 0:
+            if (j < screen[i].length - 1 && screen[i][j + 1] === "⬜") {
+              screen[i][j] = "⬜";
+              screen[i][j + 1] = "⬛";
+            }
+            break;
+          //LEFT
+          case 1:
+            if (j > 0 && screen[i][j - 1] === "⬜") {
+              screen[i][j] = "⬜";
+              screen[i][j - 1] = "⬛";
+            }
+            break;
+          //DOWN
+          case 2:
+            if (i < screen.length - 1 && screen[i + 1][j] === "⬜") {
+              screen[i][j] = "⬜";
+              screen[i + 1][j] = "⬛";
+            }
+            break;
+          //ROTATE
+          case 3:
+            console.log("rotate");
+            break;
+        }
       }
     }
   }
-}
 
-function movePieceRight() {
-  for (let i = screen.length - 2; i >= 0; i--) {
-    for (let j = screen[i].length - 1; j >= 0; j--) {
-      // GO RIGHT
-      if (screen[i][j] === "⬛" && j !== screen[i].length - 1) {
-        screen[i][j] = "⬜";
-        screen[i][j + 1] = "⬛";
-      }
-    }
-  }
-}
-
-function movePieceLeft() {
-  console.log("left");
-}
-
-function movePieceDown() {
-  console.log("down");
-}
-
-function rotatePiece() {
-  console.log("rotate");
+  return screen;
 }
 
 function gameOver() {
@@ -150,7 +196,15 @@ function gameOver() {
     answer = prompt("Play again? (y/n) ");
   }
 
-  screen = [
+  screen = resetScreen();
+  isPlaying = true;
+  updateBoard(screen);
+}
+
+tetris();
+
+function resetScreen() {
+  return [
     ["⬛", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
     ["⬛", "⬛", "⬛", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
     ["⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
@@ -162,8 +216,4 @@ function gameOver() {
     ["⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
     ["⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜", "⬜"],
   ];
-  isPlaying = true;
-  updateBoard(screen);
 }
-
-tetris();
